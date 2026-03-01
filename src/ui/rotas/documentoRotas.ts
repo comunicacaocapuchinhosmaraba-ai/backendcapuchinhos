@@ -4,7 +4,6 @@ import { DocumentoControlador } from '../controladores/DocumentoControlador';
 import { AutenticacaoMiddleware } from '../middlewares/autenticacaoMiddleware';
 import { upload } from '../../servicosTecnicos/uploads/multerConfig';
 import mongoose from 'mongoose';
-import { ObjectId } from 'mongodb';
 
 const router = Router();
 const controlador = new DocumentoControlador();
@@ -14,6 +13,14 @@ function getCol() {
   const db = mongoose.connection.db;
   if (!db) throw new Error('Banco não conectado');
   return db.collection('documentos');
+}
+
+function isValidId(id: string) {
+  return mongoose.Types.ObjectId.isValid(id);
+}
+
+function toObjectId(id: string) {
+  return new mongoose.Types.ObjectId(id);
 }
 
 function mapDoc(d: any) {
@@ -34,7 +41,9 @@ function mapDoc(d: any) {
   };
 }
 
-/* ROTAS PÚBLICAS */
+/* ===============================
+ * ROTAS PÚBLICAS
+ * =============================== */
 
 router.get('/publicos', async (_req: Request, res: Response) => {
   try {
@@ -48,8 +57,9 @@ router.get('/publicos', async (_req: Request, res: Response) => {
 
 router.get('/publicos/:id', async (req: Request, res: Response) => {
   try {
-    if (!ObjectId.isValid(String(req.params.id))) { res.status(404).json({ erro: 'Não encontrado' }); return; }
-    const doc = await getCol().findOne({ _id: new ObjectId(String(req.params.id)), status: 'ativo' });
+    const id = String(req.params.id);
+    if (!isValidId(id)) { res.status(404).json({ erro: 'Não encontrado' }); return; }
+    const doc = await getCol().findOne({ _id: toObjectId(id), status: 'ativo' });
     if (!doc) { res.status(404).json({ erro: 'Não encontrado' }); return; }
     res.json(mapDoc(doc));
   } catch (e: any) {
@@ -61,7 +71,9 @@ router.get('/publicos/:id/download', (req: Request, res: Response) =>
   controlador.download(req as any, res)
 );
 
-/* ROTAS PROTEGIDAS */
+/* ===============================
+ * ROTAS PROTEGIDAS
+ * =============================== */
 router.use(authMiddleware.verificar);
 
 router.post('/', upload.single('arquivo'), (req: Request, res: Response) =>
@@ -82,7 +94,13 @@ router.get('/', async (req: Request, res: Response) => {
       getCol().find(query).sort({ criadoEm: -1 }).skip(skip).limit(parseInt(limite)).toArray(),
       getCol().countDocuments(query),
     ]);
-    res.json({ documentos: docs.map(mapDoc), total, pagina: parseInt(pagina), totalPaginas: Math.ceil(total / parseInt(limite)), limite: parseInt(limite) });
+    res.json({
+      documentos: docs.map(mapDoc),
+      total,
+      pagina: parseInt(pagina),
+      totalPaginas: Math.ceil(total / parseInt(limite)),
+      limite: parseInt(limite),
+    });
   } catch (e: any) {
     res.status(500).json({ erro: e.message });
   }
@@ -103,7 +121,13 @@ router.get('/paginado', async (req: Request, res: Response) => {
       getCol().find(query).sort({ criadoEm: -1 }).skip(skip).limit(parseInt(limite)).toArray(),
       getCol().countDocuments(query),
     ]);
-    res.json({ documentos: docs.map(mapDoc), total, pagina: parseInt(pagina), totalPaginas: Math.ceil(total / parseInt(limite)), limite: parseInt(limite) });
+    res.json({
+      documentos: docs.map(mapDoc),
+      total,
+      pagina: parseInt(pagina),
+      totalPaginas: Math.ceil(total / parseInt(limite)),
+      limite: parseInt(limite),
+    });
   } catch (e: any) {
     res.status(500).json({ erro: e.message });
   }
@@ -111,8 +135,9 @@ router.get('/paginado', async (req: Request, res: Response) => {
 
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    if (!ObjectId.isValid(String(req.params.id))) { res.status(404).json({ erro: 'Não encontrado' }); return; }
-    const doc = await getCol().findOne({ _id: new ObjectId(String(req.params.id)) });
+    const id = String(req.params.id);
+    if (!isValidId(id)) { res.status(404).json({ erro: 'Não encontrado' }); return; }
+    const doc = await getCol().findOne({ _id: toObjectId(id) });
     if (!doc) { res.status(404).json({ erro: 'Não encontrado' }); return; }
     res.json(mapDoc(doc));
   } catch (e: any) {
@@ -122,7 +147,8 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 router.put('/:id', async (req: Request, res: Response) => {
   try {
-    if (!ObjectId.isValid(String(req.params.id))) { res.status(404).json({ erro: 'Não encontrado' }); return; }
+    const id = String(req.params.id);
+    if (!isValidId(id)) { res.status(404).json({ erro: 'Não encontrado' }); return; }
     const { titulo, categoria, nota, data, status } = req.body;
     const update: any = { atualizadoEm: new Date() };
     if (titulo) update.titulo = titulo;
@@ -131,7 +157,7 @@ router.put('/:id', async (req: Request, res: Response) => {
     if (data) update.data = data;
     if (status) update.status = status;
     const result = await getCol().findOneAndUpdate(
-      { _id: new ObjectId(String(req.params.id)) },
+      { _id: toObjectId(id) },
       { $set: update },
       { returnDocument: 'after' }
     );
@@ -144,9 +170,10 @@ router.put('/:id', async (req: Request, res: Response) => {
 
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    if (!ObjectId.isValid(String(req.params.id))) { res.status(404).json({ erro: 'Não encontrado' }); return; }
+    const id = String(req.params.id);
+    if (!isValidId(id)) { res.status(404).json({ erro: 'Não encontrado' }); return; }
     await getCol().updateOne(
-      { _id: new ObjectId(String(req.params.id)) },
+      { _id: toObjectId(id) },
       { $set: { status: 'inativo', atualizadoEm: new Date() } }
     );
     res.json({ mensagem: 'Documento excluído com sucesso' });
