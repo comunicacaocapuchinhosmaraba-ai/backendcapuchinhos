@@ -13,8 +13,7 @@ const router = Router();
 router.use('/demanda', demandaRotas);
 
 /**
- * Rotas de autenticação
- * Ex.: /auth/login, /auth/logout
+ * Rotas de autenticação Ex.: /auth/login, /auth/logout
  */
 router.use('/auth', autenticacaoRotas);
 
@@ -31,7 +30,10 @@ router.get('/debug-docs', async (_req: Request, res: Response) => {
   try {
     const mongoose = await import('mongoose');
     const db = mongoose.default.connection.db;
-    if (!db) return res.json({ erro: 'DB não conectado' });
+    if (!db) {
+      res.json({ erro: 'DB não conectado' });
+      return;
+    }
     const docs = await db.collection('documentos').find({}).toArray();
     res.json({ total: docs.length, docs: docs.slice(0, 3) });
   } catch (e: any) {
