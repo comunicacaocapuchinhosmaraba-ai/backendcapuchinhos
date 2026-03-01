@@ -14,6 +14,10 @@ import { ErroMiddleware } from './ui/middlewares/erroMiddleware';
 
 const app = express();
 
+// Necessário para o Render (e qualquer proxy reverso)
+// Permite que o express-rate-limit identifique o IP real do cliente
+app.set('trust proxy', 1);
+
 /* ===============================
  * Configurações básicas
  * =============================== */
