@@ -6,7 +6,7 @@ import {
   FiltrosDocumento,
   ResultadoPaginado,
 } from '@dominio/repositorios/IDocumentoRepositorio';
-import { DocumentoModel } from '../database/schemas/DocumentoSchema';
+import { DocumentoModel } from '../database/models/DocumentoModel';
 
 function mapToDocumento(doc: any): Documento {
   return new Documento({
