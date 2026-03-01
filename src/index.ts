@@ -1,4 +1,3 @@
-import 'reflect-metadata';
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
@@ -8,82 +7,85 @@ import rateLimit from 'express-rate-limit';
 import path from 'path';
 import fs from 'fs';
 
-import { AppDataSource } from './servicosTecnicos/database/dataSource';
+import { connectMongo } from './servicosTecnicos/database/mongo';
 import rotas from './ui/rotas';
 import { ErroMiddleware } from './ui/middlewares/erroMiddleware';
 
-
 const app = express();
 
-// 🔹 Porta segura
+/* ===============================
+ * Configurações básicas
+ * =============================== */
 const PORT: number = Number(process.env.PORT) || 3001;
 
-// ✅ Configuração de origens permitidas (CORS)
+/* ===============================
+ * CORS – origens permitidas
+ * =============================== */
 const allowedOrigins = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
   : ['http://localhost:4321'];
 
 /* ===============================
- * Middlewares de segurança
+ * Segurança (Helmet)
  * =============================== */
 app.use(
   helmet({
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
-        "frame-ancestors": [
-          "'self'",
-          ...allowedOrigins
-        ],
         "default-src": ["'self'"],
-        "img-src": ["'self'", "data:", ...allowedOrigins],
+        "frame-ancestors": ["'self'", ...allowedOrigins],
+        "img-src": ["'self'", "data:", "blob:", ...allowedOrigins],
       },
     },
   })
 );
 
+// Permite carregamento de arquivos entre domínios
 app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
 });
 
-// ✅ CORS com múltiplas origens
+/* ===============================
+ * CORS dinâmico
+ * =============================== */
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permite requisições sem origin (Postman, curl, etc)
-      if (!origin) return callback(null, true);
-      
+      if (!origin) return callback(null, true); // Postman / curl
+
       if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        console.warn(`⚠️ Origin não permitida: ${origin}`);
-        callback(new Error('Origin não permitida pelo CORS'));
+        return callback(null, true);
       }
+
+      console.warn(`⚠️ Origin não permitida: ${origin}`);
+      return callback(new Error('Origin não permitida pelo CORS'));
     },
     credentials: true,
   })
 );
 
 /* ===============================
- * Rate limiting
+ * Rate Limiting
  * =============================== */
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000, // 15 min
   max: 100,
   message: '🚫 Muitas requisições, tente novamente mais tarde',
 });
+
 app.use('/api', limiter);
 
 /* ===============================
- * Middlewares gerais
+ * Middlewares globais
  * =============================== */
 app.use(compression());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 /* ===============================
- * Arquivos estáticos
+ * Arquivos estáticos (uploads)
  * =============================== */
 const uploadsPath = path.join(__dirname, '../uploads');
 app.use('/uploads', express.static(uploadsPath));
@@ -94,13 +96,14 @@ app.use('/uploads', express.static(uploadsPath));
 app.use('/api', rotas);
 
 /* ===============================
- * Rota raiz de teste
+ * Rota raiz (health check)
  * =============================== */
 app.get('/', (_req: Request, res: Response) => {
-  res.json({
+  res.status(200).json({
     message: 'API Patinhas de Rua Marabá',
-    version: '1.0.0',
     status: 'online',
+    version: '1.0.0',
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 
@@ -113,7 +116,10 @@ app.use(ErroMiddleware.capturar);
  * Criar diretórios necessários
  * =============================== */
 async function criarDiretorios(): Promise<void> {
-  const diretorios = [uploadsPath, path.join(uploadsPath, 'temp')];
+  const diretorios = [
+    uploadsPath,
+    path.join(uploadsPath, 'temp'),
+  ];
 
   for (const dir of diretorios) {
     if (!fs.existsSync(dir)) {
@@ -130,8 +136,8 @@ async function iniciar(): Promise<void> {
   try {
     await criarDiretorios();
 
-    await AppDataSource.initialize();
-    console.log('✅ Banco de dados conectado');
+    // 🔹 Conexão com MongoDB
+    await connectMongo();
 
     app.listen(PORT, '0.0.0.0', () => {
       console.log('');
@@ -140,9 +146,7 @@ async function iniciar(): Promise<void> {
       console.log('🐾 ========================================');
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);
-      console.log(
-        `🗄️  Banco: ${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_DATABASE}`
-      );
+      console.log(`🗄️  Banco: MongoDB Atlas`);
       console.log(`🌐 CORS: ${allowedOrigins.join(', ')}`);
       console.log('🐾 ========================================');
       console.log('');

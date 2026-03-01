@@ -2,7 +2,7 @@
 import { Repository } from 'typeorm';
 import { Documento, StatusDocumento } from '@dominio/entidades/Documento';
 import { IDocumentoRepositorio, FiltrosDocumento, ResultadoPaginado } from '@dominio/repositorios/IDocumentoRepositorio';
-import { AppDataSource } from '../database/dataSource';
+import { AppDataSource } from '../database/mongo';
 
 export class DocumentoRepositorio implements IDocumentoRepositorio {
   private repositorio: Repository<Documento>;

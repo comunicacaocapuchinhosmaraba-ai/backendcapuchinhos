@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { Usuario } from '@dominio/entidades/Usuario';
 import { IUsuarioRepositorio } from '@dominio/repositorios/IUsuarioRepositorio';
-import { AppDataSource } from '../database/dataSource';
+import { AppDataSource } from '../database/mongo';
 
 export class UsuarioRepositorio implements IUsuarioRepositorio {
   private repositorio: Repository<Usuario>;
