@@ -36,7 +36,7 @@ export class CriarDocumentoUseCase {
       caminhoArquivo: resultadoUpload.caminhoRelativo ?? resultadoUpload.publicId ?? '',
       tipoArquivo: dados.arquivo.mimetype,
       tamanhoArquivo: dados.arquivo.size,
-      status: undefined,
+      status: 'ativo' as any,
       urlPublica: resultadoUpload.urlPublica,
       criadoPor: dados.criadoPorId as any,
     });
