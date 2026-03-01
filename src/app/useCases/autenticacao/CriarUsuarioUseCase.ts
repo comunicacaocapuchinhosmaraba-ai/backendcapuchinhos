@@ -32,6 +32,15 @@ export class CriarUsuarioUseCase {
       ativo: true
     });
 
-    return await this.usuarioRepositorio.criar(usuario);
+    const usuarioCriado = await this.usuarioRepositorio.criar(usuario);
+
+    return new Usuario({
+      id: usuarioCriado.id?.toString(),
+      nome: usuarioCriado.nome,
+      email: usuarioCriado.email,
+      senha: usuarioCriado.senha,
+      tipo: usuarioCriado.tipo,
+      ativo: usuarioCriado.ativo
+    });
   }
 }

@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { EnviarDemandaUseCase } from '@app/useCases/demanda/EnviarDemandaUseCase';
 
 interface DemandaDTO {
   nome: string;
@@ -15,28 +16,12 @@ export async function criarDemanda(req: Request, res: Response) {
       return res.status(400).json({ error: 'Dados inválidos' });
     }
 
-    const formData = new URLSearchParams();
-    formData.append('nome', data.nome);
-    formData.append('telefone', data.telefone);
-    formData.append('assunto', data.assunto);
-    formData.append('mensagem', data.mensagem);
-
-    // Configurações do FormSubmit
-    formData.append('_subject', 'Nova solicitação – Patinhas de Rua');
-    formData.append('_template', 'table');
-    formData.append('_captcha', 'false');
-
-    const response = await fetch(
-      'https://formsubmit.co/patinhasderuamaraba@gmail.com',
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Erro ao enviar e-mail');
-    }
+    await EnviarDemandaUseCase.executar({
+      nome: data.nome,
+      telefone: data.telefone,
+      assunto: data.assunto,
+      mensagem: data.mensagem,
+    });
 
     return res.status(200).json({ ok: true });
   } catch (error) {

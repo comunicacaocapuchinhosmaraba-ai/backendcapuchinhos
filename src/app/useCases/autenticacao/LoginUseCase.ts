@@ -43,7 +43,7 @@ export class LoginUseCase {
     }
 
     const token = this.autenticacaoServico.gerarToken({
-      usuarioId: usuario.id,
+      usuarioId: usuario.id.toString(),
       email: usuario.email,
       tipo: usuario.tipo
     });
@@ -51,7 +51,7 @@ export class LoginUseCase {
     return {
       token,
       usuario: {
-        id: usuario.id,
+        id: usuario.id.toString(),
         nome: usuario.nome,
         email: usuario.email,
         tipo: usuario.tipo

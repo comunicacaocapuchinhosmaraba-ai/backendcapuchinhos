@@ -1,3 +1,4 @@
+// src/app/useCases/documentos/DeletarDocumentoUseCase.ts
 import { IDocumentoRepositorio } from '@dominio/repositorios/IDocumentoRepositorio';
 import { IArmazenamentoServico } from '@dominio/servicos/IArmazenamentoServico';
 
@@ -9,12 +10,20 @@ export class DeletarDocumentoUseCase {
 
   async executar(id: string): Promise<void> {
     const documento = await this.documentoRepositorio.buscarPorId(id);
-
     if (!documento) {
       throw new Error('Documento não encontrado');
     }
 
-    await this.armazenamentoServico.deletarArquivo(documento.caminhoArquivo);
+    const caminho =
+      (documento as any).caminhoArquivo ??
+      (documento as any).urlPublica ??
+      (documento as any).nomeArquivo ??
+      undefined;
+
+    if (caminho) {
+      await this.armazenamentoServico.deletar(caminho);
+    }
+
     await this.documentoRepositorio.deletar(id);
   }
 }

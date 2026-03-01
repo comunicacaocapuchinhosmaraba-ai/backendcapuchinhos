@@ -1,68 +1,50 @@
-// caminho: src/dominio/entidades/Documento.ts
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
-import { Usuario } from './Usuario'; // import relativo, sem alias
+// src/dominio/entidades/Documento.ts
+import { Usuario } from './Usuario';
+
+/* ===============================
+ * ENUMS
+ * =============================== */
 
 export enum CategoriaDocumento {
   RELATORIO = 'Relatorios',
   PRESTACAO_CONTAS = 'Prestacao de contas',
-  DOCUMENTOS = 'Documentos'
+  DOCUMENTOS = 'Documentos',
 }
 
 export enum StatusDocumento {
   ATIVO = 'ativo',
   INATIVO = 'inativo',
-  ARQUIVADO = 'arquivado'
+  ARQUIVADO = 'arquivado',
 }
 
-@Entity('documentos')
+/* ===============================
+ * ENTIDADE DE DOMÍNIO
+ * =============================== */
+
 export class Documento {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
-  @Column({ length: 200 })
-  titulo: string;
+  titulo!: string;
+  categoria!: CategoriaDocumento;
 
-  @Column({ type: 'enum', enum: CategoriaDocumento })
-  categoria: CategoriaDocumento;
+  nota?: string | null;
+  data?: string | null; // YYYY-MM
 
-  @Column({ type: 'text', nullable: true })
-  nota: string;
+  nomeArquivo!: string;
+  caminhoArquivo!: string;
+  tipoArquivo!: string;
+  tamanhoArquivo!: number;
 
-  @Column({ length: 20 })
-  data: string; // YYYY-MM
+  urlPublica?: string | null;
 
-  @Column({ name: 'nome_arquivo', length: 255 })
-  nomeArquivo: string;
+  status!: StatusDocumento;
 
-  @Column({ name: 'caminho_arquivo', length: 500 })
-  caminhoArquivo: string;
+  criadoPor?: Usuario;
 
-  @Column({ name: 'tipo_arquivo', length: 50 })
-  tipoArquivo: string;
+  criadoEm!: Date;
+  atualizadoEm!: Date;
 
-  @Column({ name: 'tamanho_arquivo', type: 'bigint' })
-  tamanhoArquivo: number;
-
-  @Column({ type: 'enum', enum: StatusDocumento, default: StatusDocumento.ATIVO })
-  status: StatusDocumento;
-
-  @Column({ name: 'url_publica', length: 500, nullable: true })
-  urlPublica: string;
-
-  @ManyToOne(() => Usuario, { nullable: false })
-  @JoinColumn({ name: 'criado_por_id' })
-  criadoPor: Usuario;
-
-  @Column({ name: 'criado_por_id' })
-  criadoPorId: string;
-
-  @CreateDateColumn({ name: 'criado_em' })
-  criadoEm: Date;
-
-  @UpdateDateColumn({ name: 'atualizado_em' })
-  atualizadoEm: Date;
-
-  constructor(partial?: Partial<Documento>) {
-    Object.assign(this, partial);
+  constructor(props: Partial<Documento>) {
+    Object.assign(this, props);
   }
 }

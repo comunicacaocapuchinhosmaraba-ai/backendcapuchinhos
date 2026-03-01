@@ -1,3 +1,4 @@
+// src/server.ts
 import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
@@ -22,7 +23,7 @@ const PORT: number = Number(process.env.PORT) || 3001;
  * CORS – origens permitidas
  * =============================== */
 const allowedOrigins = process.env.CORS_ORIGIN
-  ? process.env.CORS_ORIGIN.split(',').map(origin => origin.trim())
+  ? process.env.CORS_ORIGIN.split(',').map((origin) => origin.trim())
   : ['http://localhost:4321'];
 
 /* ===============================
@@ -41,7 +42,7 @@ app.use(
   })
 );
 
-// Permite carregamento de arquivos entre domínios
+// Permite carregamento de arquivos entre domínios (para /uploads)
 app.use((_req: Request, res: Response, next: NextFunction) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
@@ -53,7 +54,7 @@ app.use((_req: Request, res: Response, next: NextFunction) => {
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // Postman / curl
+      if (!origin) return callback(null, true); // Postman / curl, etc.
 
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
@@ -66,16 +67,33 @@ app.use(
   })
 );
 
+// Trata erro de CORS de forma amigável
+app.use(
+  (
+    err: any,
+    _req: Request,
+    res: Response,
+    next: NextFunction
+  ) => {
+    if (err?.message === 'Origin não permitida pelo CORS') {
+      return res.status(403).json({ erro: err.message });
+    }
+    return next(err);
+  }
+);
+
 /* ===============================
  * Rate Limiting
  * =============================== */
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 min
   max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: '🚫 Muitas requisições, tente novamente mais tarde',
 });
 
-app.use('/api', limiter);
+app.use(limiter);
 
 /* ===============================
  * Middlewares globais

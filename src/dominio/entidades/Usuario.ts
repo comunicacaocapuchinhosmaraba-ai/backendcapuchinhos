@@ -1,41 +1,32 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+// src/dominio/entidades/Usuario.ts
+
+/* ===============================
+ * ENUM
+ * =============================== */
 
 export enum TipoUsuario {
   ADMIN = 'admin',
-  EDITOR = 'editor'
+  EDITOR = 'editor',
 }
 
-@Entity('usuarios')
+/* ===============================
+ * ENTIDADE DE DOMÍNIO
+ * =============================== */
+
 export class Usuario {
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
+  id!: string;
 
-  @Column({ unique: true, length: 100 })
-  email: string;
+  email!: string;
+  senha!: string;
+  nome!: string;
 
-  @Column({ length: 255 })
-  senha: string;
+  tipo!: TipoUsuario;
+  ativo!: boolean;
 
-  @Column({ length: 100 })
-  nome: string;
+  criadoEm!: Date;
+  atualizadoEm!: Date;
 
-  @Column({
-    type: 'enum',
-    enum: TipoUsuario,
-    default: TipoUsuario.EDITOR
-  })
-  tipo: TipoUsuario;
-
-  @Column({ default: true })
-  ativo: boolean;
-
-  @CreateDateColumn({ name: 'criado_em' })
-  criadoEm: Date;
-
-  @UpdateDateColumn({ name: 'atualizado_em' })
-  atualizadoEm: Date;
-
-  constructor(partial?: Partial<Usuario>) {
-    Object.assign(this, partial);
+  constructor(props: Partial<Usuario>) {
+    Object.assign(this, props);
   }
 }

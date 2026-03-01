@@ -21,7 +21,7 @@ export class ListarDocumentosPaginadosUseCase {
 
   async executar(params: PaginacaoParams): Promise<ResultadoPaginado> {
     const { pagina = 1, limite = 10, filtros, busca } = params;
-    
+
     const resultado = await this.documentoRepositorio.listarPaginado(
       pagina,
       limite,
@@ -29,12 +29,32 @@ export class ListarDocumentosPaginadosUseCase {
       busca
     );
 
+    const documentos = resultado.documentos.map(
+      (doc) =>
+        new Documento({
+          id: doc.id?.toString(),
+          titulo: doc.titulo,
+          categoria: doc.categoria,
+          nota: doc.nota,
+          data: doc.data,
+          nomeArquivo: doc.nomeArquivo,
+          caminhoArquivo: doc.caminhoArquivo,
+          tipoArquivo: doc.tipoArquivo,
+          tamanhoArquivo: doc.tamanhoArquivo,
+          urlPublica: doc.urlPublica,
+          status: doc.status,
+          criadoPor: doc.criadoPor,
+          criadoEm: doc.criadoEm,
+          atualizadoEm: doc.atualizadoEm,
+        })
+    );
+
     return {
-      documentos: resultado.documentos,
+      documentos,
       total: resultado.total,
       pagina,
       totalPaginas: Math.ceil(resultado.total / limite),
-      limite
+      limite,
     };
   }
 }

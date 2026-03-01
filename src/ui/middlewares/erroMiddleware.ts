@@ -30,19 +30,19 @@ export class ErroMiddleware {
       return res.status(403).json({ erro: erro.message });
     }
 
-    // Erros do TypeORM
-    if (erro.code === '23505') { // Unique violation
+    // Erros de chave única (MongoDB E11000)
+    if (erro.code === 11000) {
       return res.status(400).json({ erro: 'Registro duplicado' });
     }
 
-    if (erro.code === '23503') { // Foreign key violation
-      return res.status(400).json({ erro: 'Registro referenciado por outros dados' });
-    }
+    // Se ainda quiser manter por compatibilidade com algum driver SQL antigo, pode deixar,
+    // mas para Mongo não é necessário:
+    // if (erro.code === '23505') { ... }
+    // if (erro.code === '23503') { ... }
 
-    // Erro genérico
     return res.status(500).json({
       erro: 'Erro interno do servidor',
-      mensagem: process.env.NODE_ENV === 'development' ? erro.message : undefined
+      mensagem: process.env.NODE_ENV === 'development' ? erro.message : undefined,
     });
   }
 }

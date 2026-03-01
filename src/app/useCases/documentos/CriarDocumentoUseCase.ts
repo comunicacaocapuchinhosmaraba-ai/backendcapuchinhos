@@ -1,6 +1,11 @@
-import { Documento, CategoriaDocumento } from '@dominio/entidades/Documento';
+// src/app/useCases/documentos/CriarDocumentoUseCase.ts
+import { CategoriaDocumento, Documento } from '@dominio/entidades/Documento';
 import { IDocumentoRepositorio } from '@dominio/repositorios/IDocumentoRepositorio';
-import { IArmazenamentoServico, ArquivoUpload } from '@dominio/servicos/IArmazenamentoServico';
+import {
+  IArmazenamentoServico,
+  ArquivoUpload,
+  ResultadoUploadCloud,
+} from '@dominio/servicos/IArmazenamentoServico';
 
 export interface CriarDocumentoDTO {
   titulo: string;
@@ -18,21 +23,9 @@ export class CriarDocumentoUseCase {
   ) {}
 
   async executar(dados: CriarDocumentoDTO): Promise<Documento> {
-    // valida tipo de arquivo
-    if (!this.armazenamentoServico.validarTipoArquivo(dados.arquivo.mimetype)) {
-      throw new Error('Tipo de arquivo não permitido. Use PDF, DOC, DOCX ou imagens.');
-    }
-
-    // valida tamanho do arquivo
-    if (!this.armazenamentoServico.validarTamanhoArquivo(dados.arquivo.size)) {
-      throw new Error('Arquivo muito grande. Tamanho máximo: 10MB');
-    }
-
-    // salva fisicamente e obtém o caminho relativo (ex.: "2026/02/arquivo.png")
-    const caminhoArquivo = await this.armazenamentoServico.salvarArquivo(dados.arquivo);
-
-    // monta URL pública completa (ex.: "http://localhost:3001/uploads/2026/02/arquivo.png")
-    const urlPublica = this.armazenamentoServico.obterUrlPublica(caminhoArquivo);
+    const resultadoUpload: ResultadoUploadCloud = await this.armazenamentoServico.upload(
+      dados.arquivo
+    );
 
     const documento = new Documento({
       titulo: dados.titulo,
@@ -40,13 +33,15 @@ export class CriarDocumentoUseCase {
       nota: dados.nota,
       data: dados.data,
       nomeArquivo: dados.arquivo.originalname,
-      caminhoArquivo: caminhoArquivo,
+      caminhoArquivo: resultadoUpload.caminhoRelativo ?? resultadoUpload.publicId ?? '',
       tipoArquivo: dados.arquivo.mimetype,
       tamanhoArquivo: dados.arquivo.size,
-      urlPublica: urlPublica,
-      criadoPorId: dados.criadoPorId,
+      status: undefined,
+      urlPublica: resultadoUpload.urlPublica,
+      criadoPor: dados.criadoPorId as any,
     });
 
-    return await this.documentoRepositorio.criar(documento);
+    const criado = await this.documentoRepositorio.criar(documento);
+    return criado;
   }
 }

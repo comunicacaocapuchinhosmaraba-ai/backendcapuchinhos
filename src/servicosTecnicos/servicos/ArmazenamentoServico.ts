@@ -1,42 +1,39 @@
+// src/servicosTecnicos/servicos/ArmazenamentoServico.ts
+import { v2 as cloudinary } from 'cloudinary';
 import fs from 'fs/promises';
-import path from 'path';
 import {
   IArmazenamentoServico,
-  ArquivoUpload
+  ArquivoUpload,
+  ResultadoUploadCloud,
 } from '@dominio/servicos/IArmazenamentoServico';
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 export class ArmazenamentoServico implements IArmazenamentoServico {
-  private uploadDir: string;
   private maxFileSize: number;
   private tiposPermitidos: string[];
 
   constructor() {
-    this.uploadDir =
-      process.env.UPLOAD_DIR || path.resolve(process.cwd(), 'uploads');
-
     // 10 MB padrão
-    this.maxFileSize = Number(process.env.MAX_FILE_SIZE || 10 * 1024 * 1024);
+    this.maxFileSize = Number(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024;
 
     this.tiposPermitidos = [
-      // PDF
       'application/pdf',
-
-      // Word
       'application/msword',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-
-      // Excel
       'application/vnd.ms-excel',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-
-      // Imagens
       'image/jpeg',
       'image/png',
-      'image/jpg'
+      'image/jpg',
     ];
   }
 
-  async salvarArquivo(arquivo: ArquivoUpload): Promise<string> {
+  async upload(arquivo: ArquivoUpload): Promise<ResultadoUploadCloud> {
     if (!this.validarTipoArquivo(arquivo.mimetype)) {
       throw new Error('Tipo de arquivo não permitido');
     }
@@ -45,45 +42,39 @@ export class ArmazenamentoServico implements IArmazenamentoServico {
       throw new Error('Arquivo excede o tamanho máximo permitido');
     }
 
-    const agora = new Date();
-    const ano = agora.getFullYear();
-    const mes = String(agora.getMonth() + 1).padStart(2, '0');
+    if (!arquivo.path) {
+      throw new Error('Caminho do arquivo temporário não encontrado');
+    }
 
-    const diretorio = path.join(this.uploadDir, String(ano), mes);
-    await fs.mkdir(diretorio, { recursive: true });
+    const resultado = await cloudinary.uploader.upload(arquivo.path, {
+      folder: process.env.CLOUDINARY_FOLDER || 'capuchinhos',
+      resource_type: 'auto',
+      use_filename: true,
+      unique_filename: true,
+    });
 
-    const timestamp = Date.now();
-    const nomeSeguro = this.normalizarNomeArquivo(arquivo.originalname);
-    const nomeArquivo = `${timestamp}-${nomeSeguro}`;
-
-    const caminhoCompleto = path.join(diretorio, nomeArquivo);
-
-    await fs.copyFile(arquivo.path, caminhoCompleto);
-    await fs.unlink(arquivo.path);
-
-    return path
-      .relative(this.uploadDir, caminhoCompleto)
-      .replace(/\\/g, '/');
-  }
-
-  async deletarArquivo(caminho: string): Promise<void> {
-    if (!caminho) return;
-
-    const caminhoCompleto = path.join(this.uploadDir, caminho);
-
+    // Remove arquivo temporário após upload
     try {
-      await fs.unlink(caminhoCompleto);
+      await fs.unlink(arquivo.path);
     } catch {
       // silencioso por design
     }
+
+    return {
+      urlPublica: resultado.secure_url,
+      caminhoRelativo: resultado.public_id,
+      publicId: resultado.public_id,
+    };
   }
 
-  obterUrlPublica(caminho: string): string {
-    const baseUrl =
-      process.env.PUBLIC_BASE_URL ||
-      `http://localhost:${process.env.PORT || 3001}`;
+  async deletar(caminhoOuPublicId: string): Promise<void> {
+    if (!caminhoOuPublicId) return;
 
-    return `${baseUrl}/uploads/${caminho.replace(/\\/g, '/')}`;
+    try {
+      await cloudinary.uploader.destroy(caminhoOuPublicId);
+    } catch {
+      // silencioso por design
+    }
   }
 
   validarTipoArquivo(mimetype: string): boolean {
@@ -92,13 +83,5 @@ export class ArmazenamentoServico implements IArmazenamentoServico {
 
   validarTamanhoArquivo(tamanho: number): boolean {
     return tamanho <= this.maxFileSize;
-  }
-
-  private normalizarNomeArquivo(nome: string): string {
-    return nome
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9.\-_]/g, '_')
-      .toLowerCase();
   }
 }
