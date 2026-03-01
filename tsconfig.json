@@ -20,9 +20,6 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
 
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-
     "baseUrl": "./src",
     "paths": {
       "@dominio/*": ["dominio/*"],
@@ -31,7 +28,7 @@
       "@ui/*": ["ui/*"]
     },
 
-    "types": ["node", "express", "multer", "jest"]
+    "types": ["node", "express", "multer"]
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
