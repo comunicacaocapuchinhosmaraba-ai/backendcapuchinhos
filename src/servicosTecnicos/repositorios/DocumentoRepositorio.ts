@@ -6,7 +6,7 @@ import {
   FiltrosDocumento,
   ResultadoPaginado,
 } from '@dominio/repositorios/IDocumentoRepositorio';
-import { DocumentoModel } from '../database/models/DocumentoModel';
+import { DocumentoModel } from '../database/schemas/DocumentoSchema';
 
 function mapToDocumento(doc: any): Documento {
   return new Documento({
@@ -97,6 +97,8 @@ export class DocumentoRepositorio implements IDocumentoRepositorio {
         .lean(),
       DocumentoModel.countDocuments(query),
     ]);
+
+    console.log('🔍 DEBUG listarPaginado:', { query, total, docsCount: docs.length, collectionName: DocumentoModel.collection.name });
 
     return {
       documentos: docs.map(mapToDocumento),
