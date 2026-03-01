@@ -25,6 +25,21 @@ router.use('/auth', autenticacaoRotas);
 router.use('/documentos', documentoRotas);
 
 /**
+ * Debug endpoint - REMOVER DEPOIS
+ */
+router.get('/debug-docs', async (_req: Request, res: Response) => {
+  try {
+    const mongoose = await import('mongoose');
+    const db = mongoose.default.connection.db;
+    if (!db) return res.json({ erro: 'DB não conectado' });
+    const docs = await db.collection('documentos').find({}).toArray();
+    res.json({ total: docs.length, docs: docs.slice(0, 3) });
+  } catch (e: any) {
+    res.json({ erro: e.message });
+  }
+});
+
+/**
  * Health check da API
  */
 router.get('/health', (_req: Request, res: Response) => {
