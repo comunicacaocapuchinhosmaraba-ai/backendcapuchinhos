@@ -13,12 +13,38 @@ const authMiddleware = new AutenticacaoMiddleware();
  * =============================== */
 
 /**
- * Lista todos os documentos públicos ativos
+ * Lista todos os documentos públicos ativos (direto via MongoDB)
  * GET /documentos/publicos
  */
-router.get('/publicos', (req: Request, res: Response) =>
-  controlador.listarAtivos(req as any, res)
-);
+router.get('/publicos', async (_req: Request, res: Response) => {
+  try {
+    const mongoose = await import('mongoose');
+    const db = mongoose.default.connection.db;
+    if (!db) {
+      res.json({ documentos: [], total: 0, pagina: 1, totalPaginas: 0, limite: 12 });
+      return;
+    }
+    const docs = await db.collection('documentos')
+      .find({ status: 'ativo' })
+      .sort({ criadoEm: -1 })
+      .toArray();
+    const documentos = docs.map((d: any) => ({
+      id: d._id.toString(),
+      titulo: d.titulo,
+      categoria: d.categoria,
+      nota: d.nota ?? null,
+      data: d.data ?? null,
+      tipoArquivo: d.tipoArquivo,
+      tamanhoArquivo: d.tamanhoArquivo,
+      urlPublica: d.urlPublica ?? null,
+      criadoEm: d.criadoEm,
+      atualizadoEm: d.atualizadoEm,
+    }));
+    res.json({ documentos, total: documentos.length, pagina: 1, totalPaginas: 1, limite: documentos.length });
+  } catch (e: any) {
+    res.status(500).json({ erro: e.message });
+  }
+});
 
 /**
  * Busca documento público por ID
