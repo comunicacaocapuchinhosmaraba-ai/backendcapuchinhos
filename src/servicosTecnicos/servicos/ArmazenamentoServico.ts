@@ -19,7 +19,7 @@ export class ArmazenamentoServico implements IArmazenamentoServico {
 
   constructor() {
     // 10 MB padrão
-    this.maxFileSize = Number(process.env.MAX_FILE_SIZE) || 10 * 1024 * 1024;
+    this.maxFileSize = Number(process.env.MAX_FILE_SIZE) || 20 * 1024 * 1024;
 
     this.tiposPermitidos = [
       'application/pdf',
@@ -46,9 +46,13 @@ export class ArmazenamentoServico implements IArmazenamentoServico {
       throw new Error('Caminho do arquivo temporário não encontrado');
     }
 
+    const isImage = arquivo.mimetype.startsWith('image/');
+    const isVideo = arquivo.mimetype.startsWith('video/');
+    const resourceType: 'image' | 'video' | 'raw' = isImage ? 'image' : isVideo ? 'video' : 'raw';
+
     const resultado = await cloudinary.uploader.upload(arquivo.path, {
       folder: process.env.CLOUDINARY_FOLDER || 'capuchinhos',
-      resource_type: 'auto',
+      resource_type: resourceType,
       use_filename: true,
       unique_filename: true,
     });
