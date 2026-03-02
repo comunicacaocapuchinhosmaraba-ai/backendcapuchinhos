@@ -122,7 +122,7 @@ app.use('/api', rotas);
  * =============================== */
 app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
-    message: 'API Patinhas de Rua Marabá',
+    message: 'API Posto Padre Pio - Capuchinhos Marabá',
     status: 'online',
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
