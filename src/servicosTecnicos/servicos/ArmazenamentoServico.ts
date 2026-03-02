@@ -7,11 +7,13 @@ import {
   ResultadoUploadCloud,
 } from '@dominio/servicos/IArmazenamentoServico';
 
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
+
 
 export class ArmazenamentoServico implements IArmazenamentoServico {
   private maxFileSize: number;
@@ -20,7 +22,6 @@ export class ArmazenamentoServico implements IArmazenamentoServico {
   constructor() {
     // 10 MB padrão
     this.maxFileSize = Number(process.env.MAX_FILE_SIZE) || 20 * 1024 * 1024;
-
     this.tiposPermitidos = [
       'application/pdf',
       'application/msword',
@@ -32,7 +33,6 @@ export class ArmazenamentoServico implements IArmazenamentoServico {
       'image/jpg',
     ];
   }
-
   async upload(arquivo: ArquivoUpload): Promise<ResultadoUploadCloud> {
     if (!this.validarTipoArquivo(arquivo.mimetype)) {
       throw new Error('Tipo de arquivo não permitido');
