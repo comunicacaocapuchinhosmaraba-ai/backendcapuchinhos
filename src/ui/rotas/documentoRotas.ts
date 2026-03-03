@@ -83,7 +83,7 @@ router.post('/', upload.single('arquivo'), (req: Request, res: Response) =>
 router.get('/', async (req: Request, res: Response) => {
   try {
     const { pagina = '1', limite = '20', categoria, busca } = req.query as any;
-    const query: any = {};
+    const query: any = { status: { $ne: 'inativo' } };
     if (categoria) query.categoria = categoria;
     if (busca) query.$or = [
       { titulo: { $regex: busca, $options: 'i' } },
