@@ -77,11 +77,11 @@ router.post('/', upload.single('arquivo'), async (req: Request, res: Response) =
   }
 });
 
-// GET /galeria/admin (lista todas para admin)
+// GET /galeria/admin (lista todas para admin, exceto inativas)
 router.get('/admin', async (req: Request, res: Response) => {
   try {
     const { pagina } = req.query as any;
-    const query: any = {};
+    const query: any = { status: { $ne: 'inativo' } };
     if (pagina) query.pagina = pagina;
     const imgs = await getCol().find(query).sort({ pagina: 1, ordem: 1, criadoEm: -1 }).toArray();
     res.json({ imagens: imgs.map(mapImg), total: imgs.length });
