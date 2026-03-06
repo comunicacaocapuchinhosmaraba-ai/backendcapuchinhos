@@ -122,7 +122,7 @@ app.use('/api', rotas);
  * =============================== */
 app.get('/', (_req: Request, res: Response) => {
   res.status(200).json({
-    message: 'API Posto Padre Pio - Capuchinhos Marabá',
+    message: 'API Posto Padre Pio - ligacultural Marabá',
     status: 'online',
     version: '1.0.0',
     environment: process.env.NODE_ENV || 'development',
@@ -164,7 +164,7 @@ async function iniciar(): Promise<void> {
     app.listen(PORT, '0.0.0.0', () => {
       console.log('');
       console.log('🐾 ========================================');
-      console.log('🐾  Patinhas de Rua Marabá - API Backend');
+      console.log('🐾  liga cultural Marabá - API Backend');
       console.log('🐾 ========================================');
       console.log(`🚀 Servidor rodando na porta ${PORT}`);
       console.log(`📊 Ambiente: ${process.env.NODE_ENV || 'development'}`);

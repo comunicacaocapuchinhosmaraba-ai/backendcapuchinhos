@@ -18,7 +18,7 @@ export class EmailServico {
     });
 
     await transporter.sendMail({
-      from: `"Patinhas de Rua" <${process.env.EMAIL_USER}>`,
+      from: `"liga cultural" <${process.env.EMAIL_USER}>`,
       to: process.env.EMAIL_DESTINO,
       subject: `Nova solicitação: ${dados.assunto}`,
       html: `

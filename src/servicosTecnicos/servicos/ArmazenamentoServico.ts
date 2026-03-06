@@ -51,7 +51,7 @@ export class ArmazenamentoServico implements IArmazenamentoServico {
     const resourceType: 'image' | 'video' | 'raw' = isImage ? 'image' : isVideo ? 'video' : 'raw';
 
     const resultado = await cloudinary.uploader.upload(arquivo.path, {
-      folder: process.env.CLOUDINARY_FOLDER || 'capuchinhos',
+      folder: process.env.CLOUDINARY_FOLDER || 'ligacultural',
       resource_type: resourceType,
       use_filename: true,
       unique_filename: true,
